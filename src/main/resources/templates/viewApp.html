@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile View</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .profile-container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .profile-header h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .profile-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .profile-content {
+            padding: 32px;
+        }
+
+        .profile-section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .profile-field {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid #4f46e5;
+            transition: all 0.3s ease;
+        }
+
+        .profile-field:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .profile-label {
+            font-weight: 600;
+            color: #4f46e5;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-value {
+            color: #374151;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .resume-link {
+            color: #4f46e5;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 16px;
+            border: 2px solid #4f46e5;
+            border-radius: 8px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .resume-link:hover {
+            background: #4f46e5;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .access-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .access-yes {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+
+        .access-no {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+
+        .loading {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #ef4444;
+            margin: 20px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .profile-container {
+                margin: 20px auto;
+            }
+
+            .profile-header,
+            .profile-content {
+                padding: 20px;
+            }
+
+            .profile-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .tag-list {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="profile-container">
+    <div class="profile-header">
+        <h2>User Profile</h2>
+        <p>Professional Information</p>
+    </div>
+
+    <div class="profile-content" id="profileContent">
+        <div class="loading">Loading profile information...</div>
+    </div>
+</div>
+
+<script>
+    function createProfileField(label, value, isArray = false, isLink = false, isAccess = false) {
+        const field = document.createElement('div');
+        field.className = 'profile-field';
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'profile-label';
+        labelSpan.textContent = label;
+
+        const valueContainer = document.createElement('div');
+        valueContainer.className = 'profile-value';
+
+        if (isArray && Array.isArray(value) && value.length > 0) {
+            const tagContainer = document.createElement('div');
+            tagContainer.className = 'tag-list';
+            value.forEach(item => {
+                const tag = document.createElement('span');
+                tag.className = 'tag';
+                tag.textContent = item;
+                tagContainer.appendChild(tag);
+            });
+            valueContainer.appendChild(tagContainer);
+        } else if (isLink && value) {
+            const link = document.createElement('a');
+            link.href = value;
+            link.target = '_blank';
+            link.className = 'resume-link';
+            link.textContent = 'View Resume';
+            valueContainer.appendChild(link);
+        } else if (isAccess) {
+            const badge = document.createElement('span');
+            badge.className = `access-badge ${value ? 'access-yes' : 'access-no'}`;
+            badge.textContent = value ? 'Yes' : 'No';
+            valueContainer.appendChild(badge);
+        } else {
+            valueContainer.textContent = value || 'Not specified';
+        }
+
+        field.appendChild(labelSpan);
+        field.appendChild(valueContainer);
+        return field;
+    }
+
+    function renderProfile(user) {
+        const content = document.getElementById('profileContent');
+        content.innerHTML = '';
+
+        // Basic Information Section
+        const basicSection = document.createElement('div');
+        basicSection.className = 'profile-section';
+        basicSection.innerHTML = '<h3 class="section-title">Basic Information</h3>';
+        basicSection.appendChild(createProfileField('Name', user.userName));
+        basicSection.appendChild(createProfileField('Email', user.emailId));
+        content.appendChild(basicSection);
+
+        // Skills & Qualifications Section
+        const skillsSection = document.createElement('div');
+        skillsSection.className = 'profile-section';
+        skillsSection.innerHTML = '<h3 class="section-title">Skills & Qualifications</h3>';
+        skillsSection.appendChild(createProfileField('Skills', user.skillTagList, true));
+        skillsSection.appendChild(createProfileField('Qualifications', user.qualificationList, true));
+        skillsSection.appendChild(createProfileField('Resume', user.resumeLink, false, true));
+        content.appendChild(skillsSection);
+
+        // Learning & Teaching Section
+        const learningSection = document.createElement('div');
+        learningSection.className = 'profile-section';
+        learningSection.innerHTML = '<h3 class="section-title">Learning & Teaching</h3>';
+        learningSection.appendChild(createProfileField('Topics to Teach', user.teachList, true));
+        learningSection.appendChild(createProfileField('Topics to Learn', user.learnList, true));
+        content.appendChild(learningSection);
+
+<!--        // Access Section-->
+<!--        const accessSection = document.createElement('div');-->
+<!--        accessSection.className = 'profile-section';-->
+<!--        accessSection.innerHTML = '<h3 class="section-title">Access Settings</h3>';-->
+<!--        accessSection.appendChild(createProfileField('Self Access', user.selfAccess, false, false, true));-->
+<!--        content.appendChild(accessSection);-->
+    }
+
+    // Extract accessorId and queryId from URL path
+    // For URLs like: /1/users/view/1
+    const pathParts = window.location.pathname.split('/');
+    const accessorId = pathParts[1]; // first number after domain
+    const queryId = pathParts[4];    // last number
+
+    console.log('Fetching data for Accessor ID:', accessorId, 'Query ID:', queryId);
+
+    // Call the API endpoint (with /api prefix)
+    fetch(`/api/${accessorId}/users/view/${queryId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(user => {
+            renderProfile(user);
+        })
+        .catch(error => {
+            console.error('Error fetching user data:', error);
+            const content = document.getElementById('profileContent');
+            content.innerHTML = '<div class="error">Failed to load profile information. Please try again later.</div>';
+        });
+</script>
+</body>
+</html>

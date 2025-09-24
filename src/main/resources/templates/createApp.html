@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create User Profile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .profile-container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .profile-header h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .profile-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .profile-content {
+            padding: 32px;
+        }
+
+        .profile-section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .form-field {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid #4f46e5;
+            transition: all 0.3s ease;
+        }
+
+        .form-field:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #4f46e5;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .tag-input-container {
+            position: relative;
+        }
+
+        .tag-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+            min-height: 40px;
+            padding: 8px;
+            border: 2px dashed #e5e7eb;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tag-remove {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tag-remove:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: #4f46e5;
+        }
+
+        .checkbox-label {
+            font-size: 1rem;
+            color: #374151;
+            font-weight: normal;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #ef4444;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .profile-container {
+                margin: 20px auto;
+            }
+
+            .profile-header,
+            .profile-content {
+                padding: 20px;
+            }
+
+            .profile-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="profile-container">
+    <div class="profile-header">
+        <h2>Create User Profile</h2>
+        <p>Add Professional Information</p>
+    </div>
+
+    <div class="profile-content" id="profileContent">
+        <!-- Form will be rendered here -->
+    </div>
+</div>
+
+<script>
+    let currentUser = {};
+
+    function addTag(container, value, arrayName) {
+        if (!value.trim()) return;
+
+        const tag = document.createElement('div');
+        tag.className = 'tag';
+        tag.innerHTML = `
+            ${value.trim()}
+            <button type="button" class="tag-remove" onclick="removeTag(this, '${arrayName}')">&times;</button>
+        `;
+
+        container.appendChild(tag);
+
+        // Update the array
+        if (!currentUser[arrayName]) currentUser[arrayName] = [];
+        currentUser[arrayName].push(value.trim());
+    }
+
+    function removeTag(button, arrayName) {
+        const tag = button.parentElement;
+        const value = tag.textContent.replace('×', '').trim();
+
+        // Remove from array
+        if (currentUser[arrayName]) {
+            const index = currentUser[arrayName].indexOf(value);
+            if (index > -1) {
+                currentUser[arrayName].splice(index, 1);
+            }
+        }
+
+        tag.remove();
+    }
+
+    function createTagInput(label, arrayName, existingValues = []) {
+        const field = document.createElement('div');
+        field.className = 'form-field';
+
+        field.innerHTML = `
+            <label class="form-label">${label}</label>
+            <div class="tag-input-container">
+                <div class="tag-display" id="${arrayName}Tags"></div>
+                <input type="text" class="form-input" placeholder="Type and press Enter to add ${label.toLowerCase()}"
+                       onkeypress="handleTagInput(event, '${arrayName}')">
+            </div>
+        `;
+
+        // Add existing tags (for creation form, this will be empty)
+        const tagContainer = field.querySelector(`#${arrayName}Tags`);
+        existingValues.forEach(value => {
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            tag.innerHTML = `
+                ${value.trim()}
+                <button type="button" class="tag-remove" onclick="removeTag(this, '${arrayName}')">&times;</button>
+            `;
+            tagContainer.appendChild(tag);
+        });
+
+        return field;
+    }
+
+    function handleTagInput(event, arrayName) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const input = event.target;
+            const container = document.getElementById(`${arrayName}Tags`);
+            addTag(container, input.value, arrayName);
+            input.value = '';
+        }
+    }
+
+    function createFormField(label, name, type = 'text', value = '', isRequired = false) {
+        const field = document.createElement('div');
+        field.className = 'form-field';
+
+        if (type === 'checkbox') {
+            field.innerHTML = `
+                <div class="checkbox-container">
+                    <input type="checkbox" id="${name}" class="checkbox" ${value ? 'checked' : ''}>
+                    <label for="${name}" class="checkbox-label">${label}</label>
+                </div>
+            `;
+        } else if (type === 'textarea') {
+            field.innerHTML = `
+                <label for="${name}" class="form-label">${label} ${isRequired ? '*' : ''}</label>
+                <textarea id="${name}" class="form-input form-textarea" ${isRequired ? 'required' : ''} placeholder="Enter ${label.toLowerCase()}">${value || ''}</textarea>
+            `;
+        } else {
+            field.innerHTML = `
+                <label for="${name}" class="form-label">${label} ${isRequired ? '*' : ''}</label>
+                <input type="${type}" id="${name}" class="form-input" value="${value || ''}" placeholder="Enter ${label.toLowerCase()}" ${isRequired ? 'required' : ''}>
+            `;
+        }
+
+        return field;
+    }
+
+    function renderCreateForm() {
+        // Initialize empty user object with empty arrays
+        currentUser = {
+            skillTagList: [],
+            qualificationList: [],
+            teachList: [],
+            learnList: []
+        };
+
+        const content = document.getElementById('profileContent');
+        content.innerHTML = '';
+
+        const form = document.createElement('form');
+        form.id = 'createForm';
+        form.onsubmit = handleFormSubmit;
+
+        // Basic Information Section
+        const basicSection = document.createElement('div');
+        basicSection.className = 'profile-section';
+        basicSection.innerHTML = '<h3 class="section-title">Basic Information</h3>';
+        basicSection.appendChild(createFormField('Name', 'userName', 'text', '', true));
+        basicSection.appendChild(createFormField('Email', 'emailId', 'email', '', true));
+        form.appendChild(basicSection);
+
+        // Skills & Qualifications Section
+        const skillsSection = document.createElement('div');
+        skillsSection.className = 'profile-section';
+        skillsSection.innerHTML = '<h3 class="section-title">Skills & Qualifications</h3>';
+        skillsSection.appendChild(createTagInput('Skills', 'skillTagList', []));
+        skillsSection.appendChild(createTagInput('Qualifications', 'qualificationList', []));
+        skillsSection.appendChild(createFormField('Resume Link', 'resumeLink', 'url', ''));
+        form.appendChild(skillsSection);
+
+        // Learning & Teaching Section
+        const learningSection = document.createElement('div');
+        learningSection.className = 'profile-section';
+        learningSection.innerHTML = '<h3 class="section-title">Learning & Teaching</h3>';
+        learningSection.appendChild(createTagInput('Topics to Teach', 'teachList', []));
+        learningSection.appendChild(createTagInput('Topics to Learn', 'learnList', []));
+        form.appendChild(learningSection);
+
+        // Button Group
+        const buttonGroup = document.createElement('div');
+        buttonGroup.className = 'button-group';
+        buttonGroup.innerHTML = `
+            <button type="submit" class="btn btn-primary">Create Profile</button>
+            <a href="/" class="btn btn-secondary">Cancel</a>
+        `;
+        form.appendChild(buttonGroup);
+
+        content.appendChild(form);
+    }
+
+    function handleFormSubmit(event) {
+        event.preventDefault();
+
+        const newUser = {
+            userName: document.getElementById('userName').value,
+            emailId: document.getElementById('emailId').value,
+            skillTagList: currentUser.skillTagList || [],
+            qualificationList: currentUser.qualificationList || [],
+            resumeLink: document.getElementById('resumeLink').value,
+            teachList: currentUser.teachList || [],
+            learnList: currentUser.learnList || [],
+            selfAccess: true
+        };
+
+        // Basic validation
+        if (!newUser.userName.trim() || !newUser.emailId.trim()) {
+            const content = document.getElementById('profileContent');
+            content.insertAdjacentHTML('afterbegin',
+                '<div class="error">Please fill in all required fields (Name and Email).</div>'
+            );
+            return;
+        }
+
+        // Show loading state
+        const content = document.getElementById('profileContent');
+        const originalContent = content.innerHTML;
+        content.innerHTML = '<div class="loading">Creating profile...</div>';
+
+        // Make API call to create
+        fetch(`/api/users/create`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newUser)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(createdUser => {
+            content.innerHTML = `
+                <div class="success">
+                    Profile created successfully!
+                    <a href="/${createdUser.id}/users/view/${createdUser.id}" style="color: #065f46; text-decoration: underline; margin-left: 8px;">View Profile</a>
+                </div>
+            `;
+            setTimeout(() => {
+                window.location.href = `/${createdUser.id}/users/view/${createdUser.id}`;
+            }, 2000);
+        })
+        .catch(error => {
+            console.error('Error creating user:', error);
+            content.innerHTML = originalContent;
+            content.insertAdjacentHTML('afterbegin',
+                '<div class="error">Failed to create profile. Please check your input and try again.</div>'
+            );
+        });
+    }
+
+    // Initialize the create form immediately
+    document.addEventListener('DOMContentLoaded', function() {
+        renderCreateForm();
+    });
+</script>
+</body>
+</html>

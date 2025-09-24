@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Users</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .search-container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .search-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .search-header h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .search-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .search-form {
+            padding: 32px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .search-field {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid #4f46e5;
+            transition: all 0.3s ease;
+        }
+
+        .search-field:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .search-label {
+            font-weight: 600;
+            color: #4f46e5;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-input[multiple] {
+            min-height: 120px;
+            padding: 8px;
+        }
+
+        .search-input option {
+            padding: 8px 12px;
+            margin: 2px 0;
+        }
+
+        .search-input option:checked {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .search-button {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .search-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .results-container {
+            padding: 32px;
+        }
+
+        .results-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 24px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .user-card {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid #4f46e5;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .user-card:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .user-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .user-section {
+            margin-bottom: 12px;
+        }
+
+        .section-label {
+            font-weight: 600;
+            color: #4f46e5;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 40px 20px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #ef4444;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .search-container {
+                margin: 20px auto;
+            }
+
+            .search-header,
+            .search-form,
+            .results-container {
+                padding: 20px;
+            }
+
+            .search-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .tag-list {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="search-container">
+    <div class="search-header">
+        <h2>Search Users</h2>
+        <p>Find users by their skills and interests</p>
+    </div>
+
+    <div class="search-form">
+        <form id="searchForm" onsubmit="handleSearch(event)">
+            <div class="search-field">
+                <label class="search-label">Name</label>
+                <input type="text" id="nameInput" class="search-input"
+                       placeholder="Enter name (partial match allowed)">
+            </div>
+
+            <div class="search-field">
+                <label class="search-label">Topics to Teach</label>
+                <select id="teachTopicsSelect" class="search-input" multiple>
+                    <option value="" disabled>Loading topics...</option>
+                </select>
+                <small style="color: #6b7280; margin-top: 4px; display: block;">Hold Ctrl/Cmd to select multiple</small>
+            </div>
+
+            <div class="search-field">
+                <label class="search-label">Topics to Learn</label>
+                <select id="learnTopicsSelect" class="search-input" multiple>
+                    <option value="" disabled>Loading topics...</option>
+                </select>
+                <small style="color: #6b7280; margin-top: 4px; display: block;">Hold Ctrl/Cmd to select multiple</small>
+            </div>
+
+            <button type="submit" class="search-button" id="searchButton">
+                Search Users
+            </button>
+        </form>
+    </div>
+
+    <div class="results-container" id="resultsContainer" style="display: none;">
+        <div class="results-header" id="resultsHeader">Search Results</div>
+        <div id="resultsContent"></div>
+    </div>
+</div>
+
+<script>
+    function createUserCard(user) {
+        const card = document.createElement('div');
+        card.className = 'user-card';
+        card.onclick = () => {
+            // Navigate to user profile - adjust URL as needed
+            window.location.href = `/${user.id}/users/view/${user.id}`;
+        };
+
+        const userName = document.createElement('div');
+        userName.className = 'user-name';
+        userName.textContent = user.userName || 'Anonymous User';
+
+        card.appendChild(userName);
+
+        // Topics to Teach section
+        if (user.teachList && user.teachList.length > 0) {
+            const teachSection = document.createElement('div');
+            teachSection.className = 'user-section';
+
+            const teachLabel = document.createElement('div');
+            teachLabel.className = 'section-label';
+            teachLabel.textContent = 'Can Teach:';
+
+            const teachTags = document.createElement('div');
+            teachTags.className = 'tag-list';
+
+            user.teachList.forEach(topic => {
+                const tag = document.createElement('span');
+                tag.className = 'tag';
+                tag.textContent = topic;
+                teachTags.appendChild(tag);
+            });
+
+            teachSection.appendChild(teachLabel);
+            teachSection.appendChild(teachTags);
+            card.appendChild(teachSection);
+        }
+
+        // Topics to Learn section
+        if (user.learnList && user.learnList.length > 0) {
+            const learnSection = document.createElement('div');
+            learnSection.className = 'user-section';
+
+            const learnLabel = document.createElement('div');
+            learnLabel.className = 'section-label';
+            learnLabel.textContent = 'Wants to Learn:';
+
+            const learnTags = document.createElement('div');
+            learnTags.className = 'tag-list';
+
+            user.learnList.forEach(topic => {
+                const tag = document.createElement('span');
+                tag.className = 'tag';
+                tag.textContent = topic;
+                learnTags.appendChild(tag);
+            });
+
+            learnSection.appendChild(learnLabel);
+            learnSection.appendChild(learnTags);
+            card.appendChild(learnSection);
+        }
+
+        return card;
+    }
+
+    function renderResults(users) {
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsHeader = document.getElementById('resultsHeader');
+        const resultsContent = document.getElementById('resultsContent');
+
+        resultsContainer.style.display = 'block';
+        resultsContent.innerHTML = '';
+
+        if (!users || users.length === 0) {
+            resultsHeader.textContent = 'No Results Found';
+            resultsContent.innerHTML = '<div class="no-results">No users found matching your search criteria. Try different keywords.</div>';
+            return;
+        }
+
+        resultsHeader.textContent = `Found ${users.length} user${users.length === 1 ? '' : 's'}`;
+
+        users.forEach(user => {
+            const userCard = createUserCard(user);
+            resultsContent.appendChild(userCard);
+        });
+    }
+
+    function loadTopicOptions() {
+        // Load teach topics
+        fetch('/api/users/topicstoteachlist')
+            .then(response => response.json())
+            .then(topics => {
+                const teachSelect = document.getElementById('teachTopicsSelect');
+                teachSelect.innerHTML = '<option value="" disabled>Select topics to teach...</option>';
+                topics.forEach(topic => {
+                    const option = document.createElement('option');
+                    option.value = topic;
+                    option.textContent = topic;
+                    teachSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading teach topics:', error);
+                document.getElementById('teachTopicsSelect').innerHTML = '<option value="" disabled>Failed to load topics</option>';
+            });
+
+        // Load learn topics
+        fetch('/api/users/topicstolearnlist')
+            .then(response => response.json())
+            .then(topics => {
+                const learnSelect = document.getElementById('learnTopicsSelect');
+                learnSelect.innerHTML = '<option value="" disabled>Select topics to learn...</option>';
+                topics.forEach(topic => {
+                    const option = document.createElement('option');
+                    option.value = topic;
+                    option.textContent = topic;
+                    learnSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading learn topics:', error);
+                document.getElementById('learnTopicsSelect').innerHTML = '<option value="" disabled>Failed to load topics</option>';
+            });
+    }
+
+    function getSelectedValues(selectElement) {
+        const selected = [];
+        for (let i = 0; i < selectElement.options.length; i++) {
+            if (selectElement.options[i].selected && selectElement.options[i].value) {
+                selected.push(selectElement.options[i].value);
+            }
+        }
+        return selected;
+    }
+
+    function handleSearch(event) {
+        event.preventDefault();
+
+        const nameInput = document.getElementById('nameInput').value.trim();
+        const teachTopicsSelect = document.getElementById('teachTopicsSelect');
+        const learnTopicsSelect = document.getElementById('learnTopicsSelect');
+
+        const selectedTeachTopics = getSelectedValues(teachTopicsSelect);
+        const selectedLearnTopics = getSelectedValues(learnTopicsSelect);
+
+        // Create search query object
+        const searchQuery = {
+            nameSubstring: nameInput || null,
+            teachList: selectedTeachTopics.length > 0 ? selectedTeachTopics : null,
+            learnList: selectedLearnTopics.length > 0 ? selectedLearnTopics : null
+        };
+
+        // Check if at least one search criteria is provided
+        if (!searchQuery.nameSubstring && !searchQuery.teachList && !searchQuery.learnList) {
+            alert('Please provide at least one search criteria');
+            return;
+        }
+
+        const searchButton = document.getElementById('searchButton');
+        const resultsContent = document.getElementById('resultsContent');
+
+        // Show loading state
+        searchButton.disabled = true;
+        searchButton.textContent = 'Searching...';
+
+        const resultsContainer = document.getElementById('resultsContainer');
+        resultsContainer.style.display = 'block';
+        resultsContent.innerHTML = '<div class="loading">Searching for users...</div>';
+
+        // Extract accessorId from URL path (if needed for your API)
+        const pathParts = window.location.pathname.split('/');
+        const accessorId = pathParts[1] || '1'; // default to 1 if not in URL
+
+        // Make API call to search
+        fetch(`/api/${accessorId}/users/search`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(searchQuery)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(users => {
+            renderResults(users);
+        })
+        .catch(error => {
+            console.error('Error searching users:', error);
+            resultsContent.innerHTML = '<div class="error">Failed to search users. Please try again later.</div>';
+        })
+        .finally(() => {
+            // Reset button state
+            searchButton.disabled = false;
+            searchButton.textContent = 'Search Users';
+        });
+    }
+
+    // Load topic options when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        loadTopicOptions();
+    });
+</script>
+</body>
+</html>
