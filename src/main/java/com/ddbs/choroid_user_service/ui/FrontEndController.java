@@ -4,10 +4,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "*")
 @Controller
 public class FrontEndController {
 
-    @GetMapping("/{accessorId}/users/view/{queryId}")
+    @GetMapping("/users/{accessorId}/view/{queryId}")
     public String displayUserUI(@PathVariable long accessorId,
                                   @PathVariable long queryId,
                                   Model model) {
@@ -16,7 +17,7 @@ public class FrontEndController {
         return "viewApp";
     }
 
-    @GetMapping("/{accessorId}/users/edit")
+    @GetMapping("/users/{accessorId}/edit")
     public String updateUserUI(@PathVariable long accessorId,
                                 Model model) {
         model.addAttribute("accessorId", accessorId);
@@ -28,7 +29,7 @@ public class FrontEndController {
         return "createApp";
     }
 
-    @GetMapping("/{accessorId}/users/search")
+    @GetMapping("/users/{accessorId}/search")
     public String searchUserUI(@PathVariable long accessorId,
                                Model model) {
         model.addAttribute("accessorId", accessorId);

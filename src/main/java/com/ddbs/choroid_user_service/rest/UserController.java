@@ -12,8 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/users/api")
 public class UserController {
 
     private final ViewService viewService;
@@ -28,13 +29,13 @@ public class UserController {
         this.searchService = searchService;
     }
 
-    @GetMapping("/{accessorId}/users/view/{queryId}")
+    @GetMapping("/{accessorId}/view/{queryId}")
     public ResponseEntity<User> displayUser(@PathVariable long accessorId, @PathVariable long queryId){
         User user = viewService.viewUserGivenId(accessorId, queryId);
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{accessorId}/users/edit")
+    @PutMapping("/{accessorId}/edit")
     public ResponseEntity<User> updateProfile(@PathVariable long accessorId, @RequestBody User newUser){
         try {
             User user = updateService.updateUserProfile(accessorId, newUser);
@@ -44,7 +45,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/users/create")
+    @PostMapping("/create")
     public ResponseEntity<User> createProfile(@RequestBody User newUser){
         try {
             User user = createService.createUserProfile(newUser);
@@ -54,19 +55,19 @@ public class UserController {
         }
     }
 
-    @PostMapping("/{accessorId}/users/search")
+    @PostMapping("/{accessorId}/search")
     public ResponseEntity<List<User>> searchUser(@RequestBody SearchQueryUser queryUser){
         List<User> user = searchService.listMatchingUserProfiles(queryUser);
         return ResponseEntity.ok(user);
     }
 
-    @GetMapping("/users/topicstoteachlist")
+    @GetMapping("/topicstoteachlist")
     public ResponseEntity<List<String>> getTeachList(){
         List<String> topicsToTeach = searchService.getTopicsToTeach();
         return ResponseEntity.ok(topicsToTeach);
     }
 
-    @GetMapping("/users/topicstolearnlist")
+    @GetMapping("/topicstolearnlist")
     public ResponseEntity<List<String>> getLearnList(){
         List<String> topicsToLearn = searchService.getTopicsToLearn();
         return ResponseEntity.ok(topicsToLearn);

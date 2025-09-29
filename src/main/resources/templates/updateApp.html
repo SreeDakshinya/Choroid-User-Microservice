@@ -428,7 +428,7 @@
         buttonGroup.className = 'button-group';
         buttonGroup.innerHTML = `
             <button type="submit" class="btn btn-primary">Update Profile</button>
-            <a href="/${accessorId}/users/view/${accessorId}" class="btn btn-secondary">Cancel</a>
+            <a href="/users/${accessorId}/view/${accessorId}" class="btn btn-secondary">Cancel</a>
         `;
         form.appendChild(buttonGroup);
 
@@ -456,7 +456,7 @@
         content.innerHTML = '<div class="loading">Updating profile...</div>';
 
         // Make API call to update
-        fetch(`/api/${accessorId}/users/edit`, {
+        fetch(`/users/api/${accessorId}/edit`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -473,11 +473,11 @@
             content.innerHTML = `
                 <div class="success">
                     Profile updated successfully!
-                    <a href="/${accessorId}/users/view/${accessorId}" style="color: #065f46; text-decoration: underline; margin-left: 8px;">View Profile</a>
+                    <a href="/users/${accessorId}/view/${accessorId}" style="color: #065f46; text-decoration: underline; margin-left: 8px;">View Profile</a>
                 </div>
             `;
             setTimeout(() => {
-                window.location.href = `/${accessorId}/users/view/${accessorId}`;
+                window.location.href = `/users/${accessorId}/view/${accessorId}`;
             }, 2000);
         })
         .catch(error => {
@@ -491,12 +491,12 @@
 
     // Extract accessorId from URL path
     const pathParts = window.location.pathname.split('/');
-    const accessorId = pathParts[1];
+    const accessorId = pathParts[2];
 
     console.log('Loading profile for editing - Accessor ID:', accessorId, 'Query ID:', accessorId);
 
     // Load current user data
-    fetch(`/api/${accessorId}/users/view/${accessorId}`)
+    fetch(`/users/api/${accessorId}/view/${accessorId}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

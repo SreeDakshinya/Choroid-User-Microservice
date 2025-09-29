@@ -464,7 +464,7 @@
         content.innerHTML = '<div class="loading">Creating profile...</div>';
 
         // Make API call to create
-        fetch(`/api/users/create`, {
+        fetch(`/users/api/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -481,11 +481,11 @@
             content.innerHTML = `
                 <div class="success">
                     Profile created successfully!
-                    <a href="/${createdUser.id}/users/view/${createdUser.id}" style="color: #065f46; text-decoration: underline; margin-left: 8px;">View Profile</a>
+                    <a href="/users/${createdUser.id}/view/${createdUser.id}" style="color: #065f46; text-decoration: underline; margin-left: 8px;">View Profile</a>
                 </div>
             `;
             setTimeout(() => {
-                window.location.href = `/${createdUser.id}/users/view/${createdUser.id}`;
+                window.location.href = `/users/${createdUser.id}/view/${createdUser.id}`;
             }, 2000);
         })
         .catch(error => {

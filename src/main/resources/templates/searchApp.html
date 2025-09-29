@@ -292,8 +292,9 @@
         const card = document.createElement('div');
         card.className = 'user-card';
         card.onclick = () => {
-            // Navigate to user profile - adjust URL as needed
-            window.location.href = `/${user.id}/users/view/${user.id}`;
+            const pathParts = window.location.pathname.split('/');
+            const accessorId = pathParts[2];
+            window.location.href = `/users/${accessorId}/view/${user.id}`;
         };
 
         const userName = document.createElement('div');
@@ -377,7 +378,7 @@
 
     function loadTopicOptions() {
         // Load teach topics
-        fetch('/api/users/topicstoteachlist')
+        fetch('/users/api/topicstoteachlist')
             .then(response => response.json())
             .then(topics => {
                 const teachSelect = document.getElementById('teachTopicsSelect');
@@ -395,7 +396,7 @@
             });
 
         // Load learn topics
-        fetch('/api/users/topicstolearnlist')
+        fetch('/users/api/topicstolearnlist')
             .then(response => response.json())
             .then(topics => {
                 const learnSelect = document.getElementById('learnTopicsSelect');
@@ -459,10 +460,10 @@
 
         // Extract accessorId from URL path (if needed for your API)
         const pathParts = window.location.pathname.split('/');
-        const accessorId = pathParts[1] || '1'; // default to 1 if not in URL
+        const accessorId = pathParts[2] || '2'; // default to 1 if not in URL
 
         // Make API call to search
-        fetch(`/api/${accessorId}/users/search`, {
+        fetch(`/users/api/${accessorId}/search`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

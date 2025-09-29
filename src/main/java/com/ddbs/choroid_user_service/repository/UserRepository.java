@@ -140,11 +140,11 @@ public class UserRepository {
 
     public List<String> getTeachList() {
         String sqlQuery = "SELECT DISTINCT TopicsToTeach FROM USERS";
-        return jdbcTemplate.queryForList(sqlQuery, String.class);
+        return jdbcTemplate.queryForList(sqlQuery, String.class).parallelStream().flatMap(teachItem -> stringListConverter.convertToEntityAttribute(teachItem).stream()).distinct().toList();
     }
 
     public List<String> getLearnList() {
         String sqlQuery = "SELECT DISTINCT TopicsToLearn FROM USERS";
-        return jdbcTemplate.queryForList(sqlQuery, String.class);
+        return jdbcTemplate.queryForList(sqlQuery, String.class).parallelStream().flatMap(learnItem -> stringListConverter.convertToEntityAttribute(learnItem).stream()).distinct().toList();
     }
 }

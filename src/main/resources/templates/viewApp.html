@@ -118,6 +118,7 @@
             border-radius: 8px;
             display: inline-block;
             transition: all 0.3s ease;
+            margin-top: 8px;
         }
 
         .resume-link:hover {
@@ -126,24 +127,22 @@
             transform: translateY(-2px);
         }
 
-        .access-badge {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
+        .edit-button {
             display: inline-block;
+            margin-top: 16px;
+            padding: 12px 28px;
+            background: #10b981;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
         }
 
-        .access-yes {
-            background: #d1fae5;
-            color: #065f46;
-            border: 2px solid #10b981;
-        }
-
-        .access-no {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 2px solid #ef4444;
+        .edit-button:hover {
+            background: #059669;
+            transform: translateY(-2px);
         }
 
         .loading {
@@ -241,7 +240,7 @@
         return field;
     }
 
-    function renderProfile(user) {
+    function renderProfile(user, accessorId, queryId) {
         const content = document.getElementById('profileContent');
         content.innerHTML = '';
 
@@ -270,32 +269,37 @@
         learningSection.appendChild(createProfileField('Topics to Learn', user.learnList, true));
         content.appendChild(learningSection);
 
-<!--        // Access Section-->
-<!--        const accessSection = document.createElement('div');-->
-<!--        accessSection.className = 'profile-section';-->
-<!--        accessSection.innerHTML = '<h3 class="section-title">Access Settings</h3>';-->
-<!--        accessSection.appendChild(createProfileField('Self Access', user.selfAccess, false, false, true));-->
-<!--        content.appendChild(accessSection);-->
+        // Add Edit button if accessorId == queryId
+        if (accessorId === queryId) {
+            const editButton = document.createElement('a');
+            editButton.href = `/users/${accessorId}/edit`;
+            editButton.textContent = 'Edit Profile';
+            editButton.className = 'edit-button';
+            content.appendChild(editButton);
+
+            const updatePwdButton = document.createElement('a');
+            updatePwdButton.href = `/users/${accessorId}/edit`;
+            updatePwdButton.textContent = 'Update Password';
+            updatePwdButton.className = 'update-pwd-button';
+            content.appendChild(updatePwdButton);
+        }
     }
 
     // Extract accessorId and queryId from URL path
-    // For URLs like: /1/users/view/1
     const pathParts = window.location.pathname.split('/');
-    const accessorId = pathParts[1]; // first number after domain
+    const accessorId = pathParts[2]; // first number after domain
     const queryId = pathParts[4];    // last number
 
     console.log('Fetching data for Accessor ID:', accessorId, 'Query ID:', queryId);
 
-    // Call the API endpoint (with /api prefix)
-    fetch(`/api/${accessorId}/users/view/${queryId}`)
+    // Fetch user profile
+    fetch(`/users/api/${accessorId}/view/${queryId}`)
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return response.json();
         })
         .then(user => {
-            renderProfile(user);
+            renderProfile(user, accessorId, queryId);
         })
         .catch(error => {
             console.error('Error fetching user data:', error);
