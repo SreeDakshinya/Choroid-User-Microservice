@@ -5,6 +5,7 @@ import com.ddbs.choroid_user_service.model.SearchQueryUser;
 import com.ddbs.choroid_user_service.model.StringListConverter;
 import com.ddbs.choroid_user_service.model.User;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -15,7 +16,6 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static com.ddbs.choroid_user_service.model.User.convertJavaFieldToDbColumn;
 
@@ -31,19 +31,20 @@ public class UserRepository {
         this.dbUserRowMapper = new DbUserRowMapper();
     }
 
-    public User findUserById(long queryId) {
+    public User findUserByUsername(String queryUsername) {
         User user;
         try {
-            user =  jdbcTemplate.queryForObject("SELECT * FROM USERS WHERE ID=?", dbUserRowMapper, queryId);
-            if (user==null)
-                throw new RuntimeException("User not found with ID: " + queryId);
-        } catch (DataAccessException e) {
-            throw new RuntimeException("Data access issue in findUserById due to: " + e);
+            user = jdbcTemplate.queryForObject("SELECT * FROM USERS WHERE Username=?", dbUserRowMapper, queryUsername);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+        catch (DataAccessException e) {
+            throw new RuntimeException("Data access issue in findUserByUsername due to: " + e);
         }
         return user;
     }
 
-    public User updateUserById(long accessorId, User newUser) {
+    public User updateUserByUsername(String accessorUsername, User newUser) {
         User updatedUser;
         try {
             Field[] fields = newUser.getClass().getDeclaredFields();
@@ -64,14 +65,14 @@ public class UserRepository {
                     throw new RuntimeException(e);
                 }
             sqlQuery.delete(sqlQuery.length()-2, sqlQuery.length());
-            sqlQuery.append(" WHERE ID=?");
-            parameters.add(accessorId);
+            sqlQuery.append(" WHERE Username=?");
+            parameters.add(accessorUsername);
             int numOfAffectedRows = jdbcTemplate.update(String.valueOf(sqlQuery), parameters.toArray());
             if (numOfAffectedRows==0)
                 throw new RuntimeException("Could not update the user profile.");
-            updatedUser = findUserById(accessorId);
+            updatedUser = findUserByUsername(accessorUsername);
             if (updatedUser==null)
-                throw new RuntimeException("Updated user not found with ID: " + accessorId);
+                throw new RuntimeException("Updated user not found with Username: " + accessorUsername);
         } catch (DataAccessException e) {
             throw new RuntimeException("Data access issue in findUserById due to: " + e);
         }
@@ -86,7 +87,7 @@ public class UserRepository {
             StringBuilder sqlQuery = new StringBuilder("INSERT INTO USERS (");
             for (Field field: fields)
                 try {
-                    if (field.toString().endsWith("id") || field.toString().endsWith("selfAccess"))
+                    if (field.toString().endsWith("selfAccess"))
                         continue;
                     field.setAccessible(true);
                     sqlQuery.append(convertJavaFieldToDbColumn(field.getName())).append(", ");
@@ -112,13 +113,9 @@ public class UserRepository {
                 }
                 return ps;
             }, keyHolder);
-            long generatedId = Objects.requireNonNull(keyHolder.getKey()).longValue();
-            if (generatedId==0)
-                throw new RuntimeException("Could not create the user profile.");
-            else
-                createdUser = findUserById(generatedId);
+            createdUser = findUserByUsername(newUser.getUsername());
         } catch (DataAccessException e) {
-            throw new RuntimeException("Data access issue in findUserById due to: " + e);
+            throw new RuntimeException("Data access issue in findUserByUsername due to: " + e);
         }
         return createdUser;
     }
@@ -129,7 +126,7 @@ public class UserRepository {
         String sqlQuery = "SELECT * FROM USERS";
         allUserList = jdbcTemplate.query(sqlQuery, dbUserRowMapper);
         filteredList = allUserList.parallelStream().filter(user ->
-                        (queryUser.getNameSubstring() == null || (user.getUserName() != null && user.getUserName().toLowerCase().contains(queryUser.getNameSubstring().toLowerCase())))
+                        (queryUser.getNameSubstring() == null || (user.getName() != null && user.getName().toLowerCase().contains(queryUser.getNameSubstring().toLowerCase())))
                         &&
                         (queryUser.getLearnList() == null || (user.getLearnList() != null && user.getLearnList().stream().anyMatch(queryUser.getLearnList()::contains)))
                         &&
@@ -147,4 +144,18 @@ public class UserRepository {
         String sqlQuery = "SELECT DISTINCT TopicsToLearn FROM USERS";
         return jdbcTemplate.queryForList(sqlQuery, String.class).parallelStream().flatMap(learnItem -> stringListConverter.convertToEntityAttribute(learnItem).stream()).distinct().toList();
     }
+
+//    public User findUserByUsername(String queryUsername) {
+//        User user;
+//        try {
+//            user =  jdbcTemplate.queryForObject("SELECT * FROM USERS WHERE USERNAME=?", dbUserRowMapper, queryUsername);
+//
+//        } catch (EmptyResultDataAccessException e) {
+//            return null;
+//        }
+//        catch (DataAccessException e) {
+//            throw new RuntimeException("Data access issue in findUserByUsername due to: " + e);
+//        }
+//        return user;
+//    }
 }

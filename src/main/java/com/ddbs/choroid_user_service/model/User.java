@@ -10,12 +10,12 @@ import java.util.List;
 @Entity
 public class User {
 
-    @Id
-    @GeneratedValue
-    private Long id;
-
     @Column(name="Name")
-    private String userName;
+    private String name;
+
+    @Id
+    @Column(name="Username")
+    private String username;
 
     @Column(name="Email")
     private String emailId;
@@ -44,8 +44,9 @@ public class User {
     public User() {
     }
 
-    public User(String userName, String emailId, List<String> skillTagList, List<String> qualificationList, String resumeLink, List<String> teachList, List<String> learnList) {
-        this.userName = userName;
+    public User(String name, String username, String emailId, List<String> skillTagList, List<String> qualificationList, String resumeLink, List<String> teachList, List<String> learnList) {
+        this.name = name;
+        this.username = username;
         this.emailId = emailId;
         this.skillTagList = skillTagList;
         this.qualificationList = qualificationList;
@@ -57,21 +58,22 @@ public class User {
     @Override
     public String toString() {
         return "User{" +
-                "id=" + id +
-                ", userName='" + userName + '\'' +
+                ", name='" + name + '\'' +
+                ", username='" + username + '\'' +
                 ", emailId='" + emailId + '\'' +
-                ", skillTagList=" + skillTagList.toString() +
-                ", qualificationList=" + qualificationList.toString() +
+                ", skillTagList=" + skillTagList +
+                ", qualificationList=" + qualificationList +
                 ", resumeLink='" + resumeLink + '\'' +
-                ", teachList=" + teachList.toString() +
-                ", learnList=" + learnList.toString() +
+                ", teachList=" + teachList +
+                ", learnList=" + learnList +
                 ", selfAccess=" + selfAccess +
                 '}';
     }
 
     public static String convertJavaFieldToDbColumn(String fieldName) {
         return switch (fieldName) {
-            case "userName" -> "Name";
+            case "name" -> "Name";
+            case "username" -> "Username";
             case "emailId" -> "Email";
             case "skillTagList" -> "Skills";
             case "qualificationList" -> "Qualifications";

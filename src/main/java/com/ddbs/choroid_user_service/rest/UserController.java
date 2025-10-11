@@ -29,16 +29,16 @@ public class UserController {
         this.searchService = searchService;
     }
 
-    @GetMapping("/{accessorId}/view/{queryId}")
-    public ResponseEntity<User> displayUser(@PathVariable long accessorId, @PathVariable long queryId){
-        User user = viewService.viewUserGivenId(accessorId, queryId);
+    @GetMapping("/{accessorUsername}/view/{queryUsername}")
+    public ResponseEntity<User> displayUser(@PathVariable String accessorUsername, @PathVariable String queryUsername){
+        User user = viewService.viewUserGivenId(accessorUsername, queryUsername);
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{accessorId}/edit")
-    public ResponseEntity<User> updateProfile(@PathVariable long accessorId, @RequestBody User newUser){
+    @PutMapping("/{accessorUsername}/edit")
+    public ResponseEntity<User> updateProfile(@PathVariable String accessorUsername, @RequestBody User newUser){
         try {
-            User user = updateService.updateUserProfile(accessorId, newUser);
+            User user = updateService.updateUserProfile(accessorUsername, newUser);
             return ResponseEntity.status(HttpStatus.CREATED).body(user);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -55,7 +55,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/{accessorId}/search")
+    @PostMapping("/{accessorUsername}/search")
     public ResponseEntity<List<User>> searchUser(@RequestBody SearchQueryUser queryUser){
         List<User> user = searchService.listMatchingUserProfiles(queryUser);
         return ResponseEntity.ok(user);
@@ -71,6 +71,12 @@ public class UserController {
     public ResponseEntity<List<String>> getLearnList(){
         List<String> topicsToLearn = searchService.getTopicsToLearn();
         return ResponseEntity.ok(topicsToLearn);
+    }
+
+    @GetMapping("/checkusername/{username}")
+    public ResponseEntity<Boolean> checkUsernameHasProfile(@PathVariable String username){
+        boolean exists = createService.checkUserExistsOrNot(username);
+        return ResponseEntity.ok(exists);
     }
 
 }

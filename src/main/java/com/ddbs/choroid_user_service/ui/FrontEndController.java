@@ -8,31 +8,28 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 public class FrontEndController {
 
-    @GetMapping("/users/{accessorId}/view/{queryId}")
-    public String displayUserUI(@PathVariable long accessorId,
-                                  @PathVariable long queryId,
-                                  Model model) {
-        model.addAttribute("accessorId", accessorId);
-        model.addAttribute("queryId", queryId);
+    @GetMapping("/users/view/{queryUsername}")
+    public String displayUserUI(@PathVariable String queryUsername, Model model) {
+//        model.addAttribute("accessorUsername", accessorUsername);
+        model.addAttribute("queryUsername", queryUsername);
         return "viewApp";
     }
 
-    @GetMapping("/users/{accessorId}/edit")
-    public String updateUserUI(@PathVariable long accessorId,
-                                Model model) {
-        model.addAttribute("accessorId", accessorId);
+    @GetMapping("/users/edit")
+    public String updateUserUI(Model model) {
+//        model.addAttribute("accessorUsername", accessorUsername);
         return "updateApp";
     }
 
     @GetMapping("/users/create")
     public String createUserUI(Model model) {
+//        model.addAttribute("username", username);
         return "createApp";
     }
 
-    @GetMapping("/users/{accessorId}/search")
-    public String searchUserUI(@PathVariable long accessorId,
-                               Model model) {
-        model.addAttribute("accessorId", accessorId);
+    @GetMapping("/users/search")
+    public String searchUserUI(Model model) {
+//        model.addAttribute("accessorUsername", accessorUsername);
         return "searchApp";
     }
 

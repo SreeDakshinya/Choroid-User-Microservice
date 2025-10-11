@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -283,8 +283,19 @@
     </div>
 </div>
 
+<!--<script th:inline="javascript">-->
+<!--    const usernameFromURL = /*[[${username}]]*/ '';-->
+<!--</script>-->
+
 <script>
     let currentUser = {};
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
 
     function addTag(container, value, arrayName) {
         if (!value.trim()) return;
@@ -356,7 +367,7 @@
         }
     }
 
-    function createFormField(label, name, type = 'text', value = '', isRequired = false) {
+    function createFormField(label, name, type = 'text', value = '', isRequired = false, isReadOnly = false) {
         const field = document.createElement('div');
         field.className = 'form-field';
 
@@ -370,12 +381,12 @@
         } else if (type === 'textarea') {
             field.innerHTML = `
                 <label for="${name}" class="form-label">${label} ${isRequired ? '*' : ''}</label>
-                <textarea id="${name}" class="form-input form-textarea" ${isRequired ? 'required' : ''} placeholder="Enter ${label.toLowerCase()}">${value || ''}</textarea>
+                <textarea id="${name}" class="form-input form-textarea" ${isRequired ? 'required' : ''} ${isReadOnly ? 'readonly' : ''} placeholder="Enter ${label.toLowerCase()}">${value || ''}</textarea>
             `;
         } else {
             field.innerHTML = `
                 <label for="${name}" class="form-label">${label} ${isRequired ? '*' : ''}</label>
-                <input type="${type}" id="${name}" class="form-input" value="${value || ''}" placeholder="Enter ${label.toLowerCase()}" ${isRequired ? 'required' : ''}>
+                <input type="${type}" id="${name}" class="form-input" value="${value || ''}" ${isReadOnly ? 'readonly' : ''} placeholder="Enter ${label.toLowerCase()}" ${isRequired ? 'required' : ''}>
             `;
         }
 
@@ -398,12 +409,38 @@
         form.id = 'createForm';
         form.onsubmit = handleFormSubmit;
 
+        let username = '';
+
+        try {
+            const token = getCookie('jwtToken');
+
+            if (!token) {
+                alert('No authentication token found. Please login.');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Decode JWT payload
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            username = payload.username || payload.sub || '';
+
+        } catch (error) {
+            console.error('Error decoding JWT token:', error);
+            alert('Invalid session. Please login again.');
+            window.location.href = '/login.html';
+            return;
+        }
+
         // Basic Information Section
         const basicSection = document.createElement('div');
         basicSection.className = 'profile-section';
         basicSection.innerHTML = '<h3 class="section-title">Basic Information</h3>';
-        basicSection.appendChild(createFormField('Name', 'userName', 'text', '', true));
-        basicSection.appendChild(createFormField('Email', 'emailId', 'email', '', true));
+<!--        const token = response.headers.get('Authorization') || loginResponse.token;-->
+<!--        const payload = JSON.parse(atob(token.split('.')[1]));-->
+<!--        const username = payload.username;-->
+        basicSection.appendChild(createFormField('Name', 'name', 'text', '', true, false));
+        basicSection.appendChild(createFormField('Username', 'username', 'text', username, true, true));
+        basicSection.appendChild(createFormField('Email', 'emailId', 'email', '', true, false));
         form.appendChild(basicSection);
 
         // Skills & Qualifications Section
@@ -412,7 +449,7 @@
         skillsSection.innerHTML = '<h3 class="section-title">Skills & Qualifications</h3>';
         skillsSection.appendChild(createTagInput('Skills', 'skillTagList', []));
         skillsSection.appendChild(createTagInput('Qualifications', 'qualificationList', []));
-        skillsSection.appendChild(createFormField('Resume Link', 'resumeLink', 'url', ''));
+        skillsSection.appendChild(createFormField('Resume Link', 'resumeLink', 'url', '', false, false));
         form.appendChild(skillsSection);
 
         // Learning & Teaching Section
@@ -439,7 +476,8 @@
         event.preventDefault();
 
         const newUser = {
-            userName: document.getElementById('userName').value,
+            name: document.getElementById('name').value,
+            username: document.getElementById('username').value,
             emailId: document.getElementById('emailId').value,
             skillTagList: currentUser.skillTagList || [],
             qualificationList: currentUser.qualificationList || [],
@@ -450,7 +488,7 @@
         };
 
         // Basic validation
-        if (!newUser.userName.trim() || !newUser.emailId.trim()) {
+        if (!newUser.name.trim() || !newUser.emailId.trim()) {
             const content = document.getElementById('profileContent');
             content.insertAdjacentHTML('afterbegin',
                 '<div class="error">Please fill in all required fields (Name and Email).</div>'
@@ -481,11 +519,11 @@
             content.innerHTML = `
                 <div class="success">
                     Profile created successfully!
-                    <a href="/users/${createdUser.id}/view/${createdUser.id}" style="color: #065f46; text-decoration: underline; margin-left: 8px;">View Profile</a>
+                    <a href="/users/view/${createdUser.username}" style="color: #065f46; text-decoration: underline; margin-left: 8px;">View Profile</a>
                 </div>
             `;
             setTimeout(() => {
-                window.location.href = `/users/${createdUser.id}/view/${createdUser.id}`;
+                window.location.href = `/users/view/${createdUser.username}`;
             }, 2000);
         })
         .catch(error => {

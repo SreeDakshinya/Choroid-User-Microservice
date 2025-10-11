@@ -356,7 +356,7 @@
         }
     }
 
-    function createFormField(label, name, type = 'text', value = '', isRequired = false) {
+    function createFormField(label, name, type = 'text', value = '', isRequired = false, isReadOnly = false) {
         const field = document.createElement('div');
         field.className = 'form-field';
 
@@ -370,16 +370,47 @@
         } else if (type === 'textarea') {
             field.innerHTML = `
                 <label for="${name}" class="form-label">${label} ${isRequired ? '*' : ''}</label>
-                <textarea id="${name}" class="form-input form-textarea" ${isRequired ? 'required' : ''}>${value || ''}</textarea>
+                <textarea id="${name}" class="form-input form-textarea" ${isRequired ? 'required' : ''} ${isReadOnly ? 'readonly' : ''}>${value || ''}</textarea>
             `;
         } else {
             field.innerHTML = `
                 <label for="${name}" class="form-label">${label} ${isRequired ? '*' : ''}</label>
-                <input type="${type}" id="${name}" class="form-input" value="${value || ''}" ${isRequired ? 'required' : ''}>
+                <input type="${type}" id="${name}" class="form-input" value="${value || ''}" ${isRequired ? 'required' : ''} ${isReadOnly ? 'readonly' : ''}>
             `;
         }
 
         return field;
+    }
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
+    function checkAuth() {
+        let accessorUsername = '';
+
+        try {
+            const token = getCookie('jwtToken');
+
+            if (!token) {
+                alert('No authentication token found. Please login.');
+                window.location.href = '/login.html';
+                return null; // ✅ valid inside function
+            }
+
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            accessorUsername = payload.username || payload.sub || '';
+            return accessorUsername;
+
+        } catch (error) {
+            console.error('Error decoding JWT token:', error);
+            alert('Invalid session. Please login again.');
+            window.location.href = '/login.html';
+            return null;
+        }
     }
 
     function renderUpdateForm(user) {
@@ -395,8 +426,9 @@
         const basicSection = document.createElement('div');
         basicSection.className = 'profile-section';
         basicSection.innerHTML = '<h3 class="section-title">Basic Information</h3>';
-        basicSection.appendChild(createFormField('Name', 'userName', 'text', user.userName, true));
-        basicSection.appendChild(createFormField('Email', 'emailId', 'email', user.emailId, true));
+        basicSection.appendChild(createFormField('Name', 'name', 'text', user.name, true, false));
+        basicSection.appendChild(createFormField('Username', 'username', 'text', user.username, true, true));
+        basicSection.appendChild(createFormField('Email', 'emailId', 'email', user.emailId, true, false));
         form.appendChild(basicSection);
 
         // Skills & Qualifications Section
@@ -428,7 +460,7 @@
         buttonGroup.className = 'button-group';
         buttonGroup.innerHTML = `
             <button type="submit" class="btn btn-primary">Update Profile</button>
-            <a href="/users/${accessorId}/view/${accessorId}" class="btn btn-secondary">Cancel</a>
+            <a href="/users/view/${accessorUsername}" class="btn btn-secondary">Cancel</a>
         `;
         form.appendChild(buttonGroup);
 
@@ -440,7 +472,8 @@
 
         const formData = new FormData(event.target);
         const updatedUser = {
-            userName: document.getElementById('userName').value,
+            name: document.getElementById('name').value,
+            username: document.getElementById('username').value,
             emailId: document.getElementById('emailId').value,
             skillTagList: currentUser.skillTagList || [],
             qualificationList: currentUser.qualificationList || [],
@@ -456,7 +489,7 @@
         content.innerHTML = '<div class="loading">Updating profile...</div>';
 
         // Make API call to update
-        fetch(`/users/api/${accessorId}/edit`, {
+        fetch(`/users/api/${accessorUsername}/edit`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -473,11 +506,11 @@
             content.innerHTML = `
                 <div class="success">
                     Profile updated successfully!
-                    <a href="/users/${accessorId}/view/${accessorId}" style="color: #065f46; text-decoration: underline; margin-left: 8px;">View Profile</a>
+                    <a href="/users/view/${accessorUsername}" style="color: #065f46; text-decoration: underline; margin-left: 8px;">View Profile</a>
                 </div>
             `;
             setTimeout(() => {
-                window.location.href = `/users/${accessorId}/view/${accessorId}`;
+                window.location.href = `/users/view/${accessorUsername}`;
             }, 2000);
         })
         .catch(error => {
@@ -489,14 +522,17 @@
         });
     }
 
-    // Extract accessorId from URL path
+    // Extract accessorUsername from URL path
     const pathParts = window.location.pathname.split('/');
-    const accessorId = pathParts[2];
+    const accessorUsername = checkAuth();
+    if (accessorUsername) {
+       console.log('Logged-in user:', accessorUsername);
+    }
 
-    console.log('Loading profile for editing - Accessor ID:', accessorId, 'Query ID:', accessorId);
+    console.log('Loading profile for editing - Accessor ID:', accessorUsername, 'Query ID:', accessorUsername);
 
     // Load current user data
-    fetch(`/users/api/${accessorId}/view/${accessorId}`)
+    fetch(`/users/api/${accessorUsername}/view/${accessorUsername}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

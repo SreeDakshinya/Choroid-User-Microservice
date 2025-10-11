@@ -4,6 +4,8 @@ import com.ddbs.choroid_user_service.model.User;
 import com.ddbs.choroid_user_service.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 @Service
 public class ViewService{
 
@@ -13,10 +15,10 @@ public class ViewService{
         this.userRepository = userRepository;
     }
 
-    public User viewUserGivenId(long accessorId, long queryId) {
-        User userDescription = userRepository.findUserById(queryId);
+    public User viewUserGivenId(String accessorUsername, String queryUsername) {
+        User userDescription = userRepository.findUserByUsername(queryUsername);
 
-        if (accessorId==queryId) {
+        if (!Objects.isNull(userDescription) && Objects.equals(accessorUsername, queryUsername)) {
             userDescription.setSelfAccess(true);
         }
         return userDescription;

@@ -15,9 +15,9 @@ public class DbUserRowMapper implements RowMapper<User> {
     @Override
     public User mapRow(ResultSet resultSet, int rowNum) throws SQLException {
 
-        Long id = resultSet.getLong("ID");
+        String name = resultSet.getString("Name");
 
-        String userName = resultSet.getString("Name");
+        String username = resultSet.getString("Username");
 
         String emailId = resultSet.getString("Email");
 
@@ -35,9 +35,8 @@ public class DbUserRowMapper implements RowMapper<User> {
         String learnString = resultSet.getString("TopicsToLearn");
         List<String> learnList = stringListConverter.convertToEntityAttribute(learnString);
 
-        User user = new User(userName, emailId, skillTagList, qualificationList, resumeLink, teachList, learnList);
+        User user = new User(name, username, emailId, skillTagList, qualificationList, resumeLink, teachList, learnList);
 
-        user.setId(id);
         user.setSelfAccess(false);
 
         return user;

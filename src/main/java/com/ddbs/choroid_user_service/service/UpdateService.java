@@ -13,8 +13,8 @@ public class UpdateService{
         this.userRepository = userRepository;
     }
 
-    public User updateUserProfile(long accessorId, User newUser) {
-        return userRepository.updateUserById(accessorId, newUser);
+    public User updateUserProfile(String accessorUsername, User newUser) {
+        return userRepository.updateUserByUsername(accessorUsername, newUser);
     }
 
 }
