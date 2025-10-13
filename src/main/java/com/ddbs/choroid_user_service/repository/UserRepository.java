@@ -4,20 +4,19 @@ import com.ddbs.choroid_user_service.model.DbUserRowMapper;
 import com.ddbs.choroid_user_service.model.SearchQueryUser;
 import com.ddbs.choroid_user_service.model.StringListConverter;
 import com.ddbs.choroid_user_service.model.User;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.apache.spark.api.java.function.FilterFunction;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import static com.ddbs.choroid_user_service.model.User.convertJavaFieldToDbColumn;
+import static org.apache.spark.sql.functions.*;
 
 @Repository
 public class UserRepository {
@@ -25,124 +24,86 @@ public class UserRepository {
     private final JdbcTemplate jdbcTemplate;
     private final DbUserRowMapper dbUserRowMapper;
     private final StringListConverter stringListConverter = new StringListConverter();
+    private SparkLogic sparkLogic;
 
-    public UserRepository(JdbcTemplate jdbcTemplate) {
+    public UserRepository(JdbcTemplate jdbcTemplate, SparkLogic sparkLogic) {
         this.jdbcTemplate = jdbcTemplate;
         this.dbUserRowMapper = new DbUserRowMapper();
+        this.sparkLogic = sparkLogic;
     }
 
     public User findUserByUsername(String queryUsername) {
-        User user;
-        try {
-            user = jdbcTemplate.queryForObject("SELECT * FROM USERS WHERE Username=?", dbUserRowMapper, queryUsername);
-        } catch (EmptyResultDataAccessException e) {
-            return null;
-        }
-        catch (DataAccessException e) {
-            throw new RuntimeException("Data access issue in findUserByUsername due to: " + e);
-        }
-        return user;
+
+        Dataset<User> userData = sparkLogic.getCachedData();
+        return userData.filter(userData.col("username").eqNullSafe(queryUsername)).head();
     }
 
     public User updateUserByUsername(String accessorUsername, User newUser) {
-        User updatedUser;
-        try {
-            Field[] fields = newUser.getClass().getDeclaredFields();
-            List<Object> parameters = new ArrayList<>();
-            StringBuilder sqlQuery = new StringBuilder("UPDATE USERS SET ");
-            for (Field field: fields)
-                try {
-                    if (field.toString().endsWith("id") || field.toString().endsWith("selfAccess"))
-                        continue;
-                    field.setAccessible(true);
-                    sqlQuery.append(convertJavaFieldToDbColumn(field.getName())).append(" = ?, ");
-                    Object value = field.get(newUser);
-                    if (value instanceof List)
-                        parameters.add(this.stringListConverter.convertToDatabaseColumn((List<String>) value));
-                    else
-                        parameters.add(value);
-                } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new RuntimeException(e);
+        Dataset<User> userData = sparkLogic.getCachedData();
+        Field[] fields = newUser.getClass().getDeclaredFields();
+        Column condition = col("username").equalTo(lit(accessorUsername));
+        Map<String, Column> updationMap = new HashMap<>();
+
+        for (Field field: fields) {
+            field.setAccessible(true);
+            if (field.getName().equals("selfAccess"))
+                continue;
+            try {
+                Column existing = col(field.getName());
+                Object newValue = field.get(newUser);
+                Column updated;
+                if (newValue instanceof List) {
+                    List<String> list = (List<String>) newValue;
+                    Column[] litValues = new Column[list.size()];
+                    for (int i = 0; i < list.size(); i++) {
+                        litValues[i] = lit(list.get(i));
+                    }
+                    Column arrayCol = array(litValues);
+                    updated = when(condition, arrayCol).otherwise(existing);
                 }
-            sqlQuery.delete(sqlQuery.length()-2, sqlQuery.length());
-            sqlQuery.append(" WHERE Username=?");
-            parameters.add(accessorUsername);
-            int numOfAffectedRows = jdbcTemplate.update(String.valueOf(sqlQuery), parameters.toArray());
-            if (numOfAffectedRows==0)
-                throw new RuntimeException("Could not update the user profile.");
-            updatedUser = findUserByUsername(accessorUsername);
-            if (updatedUser==null)
-                throw new RuntimeException("Updated user not found with Username: " + accessorUsername);
-        } catch (DataAccessException e) {
-            throw new RuntimeException("Data access issue in findUserById due to: " + e);
+                else
+                    updated = when(condition, newValue).otherwise(existing);
+                updationMap.put(field.getName(), updated);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
         }
-        return updatedUser;
+
+        if (!updationMap.isEmpty())
+            userData = userData.withColumns(updationMap).as(Encoders.bean(User.class));
+
+        sparkLogic.saveToDatabase(userData);
+
+        return findUserByUsername(accessorUsername);
     }
 
     public User createUser(User newUser) {
-        User createdUser;
-        try {
-            Field[] fields = newUser.getClass().getDeclaredFields();
-            List<Object> parameters = new ArrayList<>();
-            StringBuilder sqlQuery = new StringBuilder("INSERT INTO USERS (");
-            for (Field field: fields)
-                try {
-                    if (field.toString().endsWith("selfAccess"))
-                        continue;
-                    field.setAccessible(true);
-                    sqlQuery.append(convertJavaFieldToDbColumn(field.getName())).append(", ");
-                    Object value = field.get(newUser);
-                    if (value instanceof List)
-                        parameters.add(this.stringListConverter.convertToDatabaseColumn((List<String>) value));
-                    else
-                        parameters.add(value);
-                } catch (IllegalArgumentException | IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-            sqlQuery.delete(sqlQuery.length()-2, sqlQuery.length());
-            sqlQuery.append(") VALUES (");
-            sqlQuery.append("?, ".repeat(parameters.size()));
-            sqlQuery.delete(sqlQuery.length()-2, sqlQuery.length());
-            sqlQuery.append(")");
-            KeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(connection -> {
-                PreparedStatement ps = connection.prepareStatement(sqlQuery.toString(), Statement.RETURN_GENERATED_KEYS);
-                Object[] params = parameters.toArray();
-                for (int i = 0; i < params.length; i++) {
-                    ps.setObject(i + 1, params[i]);
-                }
-                return ps;
-            }, keyHolder);
-            createdUser = findUserByUsername(newUser.getUsername());
-        } catch (DataAccessException e) {
-            throw new RuntimeException("Data access issue in findUserByUsername due to: " + e);
-        }
-        return createdUser;
+        Dataset<User> userData = sparkLogic.getCachedData();
+        Dataset<User> newRow = sparkLogic.sparkSession.createDataset(Collections.singletonList(newUser), Encoders.bean(User.class));
+        userData = userData.unionByName(newRow, true);
+        sparkLogic.saveToDatabase(userData);
+        return findUserByUsername(newUser.getUsername());
     }
 
     public List<User> listMatchingUsers(SearchQueryUser queryUser) {
-        List<User> allUserList;
-        List<User> filteredList;
-        String sqlQuery = "SELECT * FROM USERS";
-        allUserList = jdbcTemplate.query(sqlQuery, dbUserRowMapper);
-        filteredList = allUserList.parallelStream().filter(user ->
-                        (queryUser.getNameSubstring() == null || (user.getName() != null && user.getName().toLowerCase().contains(queryUser.getNameSubstring().toLowerCase())))
-                        &&
-                        (queryUser.getLearnList() == null || (user.getLearnList() != null && user.getLearnList().stream().anyMatch(queryUser.getLearnList()::contains)))
-                        &&
-                        (queryUser.getTeachList() == null || (user.getTeachList() != null && user.getTeachList().stream().anyMatch(queryUser.getTeachList()::contains)))
-                ).toList();
-        return filteredList;
+        Dataset<User> userData = sparkLogic.getCachedData();
+        if (queryUser.getNameSubstring()!=null)
+            userData = userData.filter(new NameSubstringFilter(queryUser.getNameSubstring()));
+        if (queryUser.getLearnList()!=null)
+            userData = userData.filter(new LearnListFilter(queryUser.getLearnList()));
+        if (queryUser.getTeachList()!=null)
+            userData = userData.filter(new TeachListFilter(queryUser.getTeachList()));
+        return userData.collectAsList();
     }
 
     public List<String> getTeachList() {
-        String sqlQuery = "SELECT DISTINCT TopicsToTeach FROM USERS";
-        return jdbcTemplate.queryForList(sqlQuery, String.class).parallelStream().flatMap(teachItem -> stringListConverter.convertToEntityAttribute(teachItem).stream()).distinct().toList();
+        Dataset<User> userData = sparkLogic.getCachedData();
+        return userData.flatMap(new TeachListFlatMapper(), Encoders.STRING()).distinct().collectAsList();
     }
 
     public List<String> getLearnList() {
-        String sqlQuery = "SELECT DISTINCT TopicsToLearn FROM USERS";
-        return jdbcTemplate.queryForList(sqlQuery, String.class).parallelStream().flatMap(learnItem -> stringListConverter.convertToEntityAttribute(learnItem).stream()).distinct().toList();
+        Dataset<User> userData = sparkLogic.getCachedData();
+        return userData.flatMap(new LearnListFlatMapper(), Encoders.STRING()).distinct().collectAsList();
     }
 
 //    public User findUserByUsername(String queryUsername) {
@@ -158,4 +119,84 @@ public class UserRepository {
 //        }
 //        return user;
 //    }
+}
+
+class NameSubstringFilter implements FilterFunction<User>, Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private final String nameSubstring;
+
+    public NameSubstringFilter(String nameSubstring) {
+        this.nameSubstring = nameSubstring.toLowerCase();
+    }
+
+    @Override
+    public boolean call(User user) throws Exception {
+        return user.getName().toLowerCase().contains(nameSubstring);
+    }
+}
+
+class LearnListFilter implements FilterFunction<User>, Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private final List<String> learnList;
+
+    public LearnListFilter(List<String> learnList) {
+        this.learnList = new ArrayList<>(learnList);
+    }
+
+    @Override
+    public boolean call(User user) throws Exception {
+//        return user.getLearnList().stream().anyMatch(learnList::contains);
+        for (String item : user.getLearnList()) {
+            if (learnList.contains(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+class TeachListFilter implements FilterFunction<User>, Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private final List<String> teachList;
+
+    public TeachListFilter(List<String> teachList) {
+        this.teachList = new ArrayList<>(teachList);
+    }
+
+    @Override
+    public boolean call(User user) throws Exception {
+//        return user.getTeachList().stream().anyMatch(teachList::contains);
+        for (String item : user.getTeachList()) {
+            if (teachList.contains(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+class TeachListFlatMapper implements FlatMapFunction<User, String>, Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public Iterator<String> call(User user) throws Exception {
+        return user.getTeachList().iterator();
+    }
+}
+
+class LearnListFlatMapper implements FlatMapFunction<User, String>, Serializable {
+    
+    private static final long serialVersionUID = 1L;
+    
+    @Override
+    public Iterator<String> call(User user) throws Exception {
+        return user.getLearnList().iterator();
+    }
 }

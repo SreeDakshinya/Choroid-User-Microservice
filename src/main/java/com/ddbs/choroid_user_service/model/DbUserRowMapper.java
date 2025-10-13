@@ -1,13 +1,28 @@
 package com.ddbs.choroid_user_service.model;
 
 import org.springframework.jdbc.core.RowMapper;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 
 public class DbUserRowMapper implements RowMapper<User> {
 
     private final StringListConverter stringListConverter = new StringListConverter();
+
+    public static HashMap<String, String> dbToUserMap = new HashMap<>();
+
+    static {
+        dbToUserMap.put("Name", "name");
+        dbToUserMap.put("Username", "username");
+        dbToUserMap.put("Email", "emailId");
+        dbToUserMap.put("Skills", "skillTagList");
+        dbToUserMap.put("Qualifications", "qualificationList");
+        dbToUserMap.put("ResumeLink", "resumeLink");
+        dbToUserMap.put("TopicsToTeach", "teachList");
+        dbToUserMap.put("TopicsToLearn", "learnList");
+    }
 
     public DbUserRowMapper() {
     }

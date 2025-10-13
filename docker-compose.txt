@@ -1,0 +1,109 @@
+services:
+  spark-master:
+    image: apache/spark:3.5.3-java17
+    container_name: spark-master
+    command: [ "/opt/spark/sbin/start-master.sh" ] # Simple, single command
+    environment:
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_LOCAL_DIRS=/tmp
+      - SPARK_CONNECT_HOST=0.0.0.0
+    ports:
+      - "8085:8085"   # Spark Master Web UI
+      - "7077:7077"   # Spark Master Port
+    networks:
+      - spark-network
+
+  spark-connect:
+    image: apache/spark:3.5.3-java17
+    container_name: spark-connect
+    # CRITICAL: Point the Connect Server to the Master Daemon URL
+#    command:
+#      [
+#        "/opt/spark/bin/spark-submit",
+#        "--class", "org.apache.spark.sql.connect.service.SparkConnectServer",
+#        "--master", "spark://spark-master:7077",
+#
+#        # The Connect server application itself (often spark-submit needs a JAR/app name)
+#        # Since this class is part of the Spark distribution, we usually just need the class path:
+#        "/opt/spark/jars/*" # Using the jars path as the application resource
+#      ]
+#    command: ["/bin/bash", "-c", "/opt/spark/sbin/start-connect-server.sh --master spark://spark-master:7077"]
+    command: ["/bin/bash", "-c", "/opt/spark/sbin/start-connect-server.sh spark://spark-master:7077 && sleep infinity"]
+    environment:
+      - SPARK_CONNECT_HOST=0.0.0.0
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_HOME=/opt/spark  # Ensure SPARK_HOME is set
+    ports:
+        - "15002:15002"
+    depends_on:
+        - spark-master
+    networks:
+        - spark-network
+
+  spark-worker-1:
+    image: apache/spark:3.5.3-java17
+    container_name: spark-worker-1
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    environment:
+#      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8086:8086"   # Worker 1 Web UI
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+
+  spark-worker-2:
+    image: apache/spark:3.5.3-java17
+    container_name: spark-worker-2
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    environment:
+#      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8087:8086"   # Worker 2 Web UI
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+
+  spark-worker-3:
+    image: apache/spark:3.5.3-java17
+    container_name: spark-worker-3
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    environment:
+#      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8088:8086"   # Worker 3 Web UI
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+
+networks:
+  spark-network:
+    driver: bridge

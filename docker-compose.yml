@@ -1,0 +1,113 @@
+services:
+  spark-master:
+    image: apache/spark:3.5.3-scala2.12-java11-python3-r-ubuntu
+    container_name: spark-master
+    command: ["/bin/bash", "-c", "/opt/spark/sbin/start-master.sh && tail -f /opt/spark/logs/spark-*.out"]
+    environment:
+      - SPARK_MASTER_HOST=0.0.0.0
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_LOCAL_DIRS=/tmp
+    ports:
+      - "8085:8080"   # Your port for Spark Master Web UI
+      - "7077:7077"   # Spark Master Port
+    volumes:
+      - ./build/libs:/opt/app-jars  # Mount JAR directory
+      - ./libs:/opt/libs           # Mount external libs (H2, etc.)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - spark-network
+
+  spark-worker-1:
+    image: apache/spark:3.5.3-scala2.12-java11-python3-r-ubuntu
+    container_name: spark-worker-1
+    command: ["/bin/bash", "-c", "/opt/spark/sbin/start-worker.sh spark://host.docker.internal:7077 && tail -f /opt/spark/logs/spark-*.out"]
+    environment:
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8086:8081"   # Your port for Worker 1 Web UI
+    volumes:
+      - ./build/libs:/opt/app-jars  # Mount JAR directory
+      - ./libs:/opt/libs           # Mount external libs (H2, etc.)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+
+  spark-worker-2:
+    image: apache/spark:3.5.3-scala2.12-java11-python3-r-ubuntu
+    container_name: spark-worker-2
+    command: ["/bin/bash", "-c", "/opt/spark/sbin/start-worker.sh spark://host.docker.internal:7077 && tail -f /opt/spark/logs/spark-*.out"]
+    environment:
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8087:8081"   # Your port for Worker 2 Web UI
+    volumes:
+      - ./build/libs:/opt/app-jars  # Mount JAR directory
+      - ./libs:/opt/libs           # Mount external libs (H2, etc.)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+
+  spark-worker-3:
+    image: apache/spark:3.5.3-scala2.12-java11-python3-r-ubuntu
+    container_name: spark-worker-3
+    command: ["/bin/bash", "-c", "/opt/spark/sbin/start-worker.sh spark://host.docker.internal:7077 && tail -f /opt/spark/logs/spark-*.out"]
+    environment:
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8088:8081"   # Your port for Worker 3 Web UI
+    volumes:
+      - ./build/libs:/opt/app-jars  # Mount JAR directory
+      - ./libs:/opt/libs           # Mount external libs (H2, etc.)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+
+  h2-database:
+    image: openjdk:11-jre-slim
+    container_name: h2-database
+    ports:
+      - "9092:9092"   # H2 TCP server port
+      - "8082:8082"   # H2 Web console port
+    volumes:
+      - h2_data:/opt/h2-data
+      - ./libs:/opt/libs
+    working_dir: /opt/libs
+    command: >
+      sh -c "java -Dh2.bindAddress=0.0.0.0 -Dh2.tcpAllowOthers=true -Dh2.webAllowOthers=true -cp h2.jar org.h2.tools.Server -tcp -tcpAllowOthers -tcpPort 9092 -web -webAllowOthers -webPort 8082 -baseDir /opt/h2-data"
+    networks:
+      - spark-network
+
+volumes:
+  h2_data:
+
+networks:
+  spark-network:
+    driver: bridge

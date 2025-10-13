@@ -6,12 +6,11 @@ import lombok.Setter;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.io.Serializable;
-import java.util.List;
 
 @Getter
 @Setter
 @Entity
-public class User implements Serializable {
+public class UserRow implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -27,29 +26,29 @@ public class User implements Serializable {
 
 //    @Column(name="Skills", columnDefinition = "json")
 //    @Convert(converter = StringListConverter.class) //Converters work only for JPA
-    private List<String> skillTagList;
+    private String skillTagList;
 
 //    @Column(name="Qualifications", columnDefinition = "json")
 //    @Convert(converter = StringListConverter.class)
-    private List<String> qualificationList;
+    private String qualificationList;
 
 //    @Column(name="ResumeLink")
     private String resumeLink;
 
 //    @Column(name="TopicsToTeach", columnDefinition = "json")
 //    @Convert(converter = StringListConverter.class)
-    private List<String> teachList;
+    private String teachList;
 
 //    @Column(name="TopicsToLearn", columnDefinition = "json")
 //    @Convert(converter = StringListConverter.class)
-    private List<String> learnList;
+    private String learnList;
 
     private boolean selfAccess;
 
-    public User() {
+    public UserRow() {
     }
 
-    public User(String name, String username, String emailId, List<String> skillTagList, List<String> qualificationList, String resumeLink, List<String> teachList, List<String> learnList) {
+    public UserRow(String name, String username, String emailId, String skillTagList, String qualificationList, String resumeLink, String teachList, String learnList) {
         this.name = name;
         this.username = username;
         this.emailId = emailId;
