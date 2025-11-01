@@ -51,7 +51,9 @@ public class UserController {
             User user = createService.createUserProfile(newUser);
             return ResponseEntity.status(HttpStatus.CREATED).body(user);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.err.println(" Error creating user: " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to create user: " + e.getMessage(), e);
         }
     }
 
@@ -77,6 +79,12 @@ public class UserController {
     public ResponseEntity<Boolean> checkUsernameHasProfile(@PathVariable String username){
         boolean exists = createService.checkUserExistsOrNot(username);
         return ResponseEntity.ok(exists);
+    }
+
+    @GetMapping("/findemail/{username}")
+    public ResponseEntity<String> findEmailGivenUsername(@PathVariable String username){
+        String emailId = createService.findEmailUsingUsername(username);
+        return ResponseEntity.ok(emailId);
     }
 
 }

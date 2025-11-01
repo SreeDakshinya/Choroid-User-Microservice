@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 import static org.apache.spark.sql.functions.lit;
@@ -48,7 +49,7 @@ public class SparkLogic {
 
     @EventListener(ApplicationReadyEvent.class)
     public void initSpark() {
-            System.out.println("🚀 Initializing Spark Session...");
+            System.out.println("Initializing Spark Session...");
             System.out.println("Java Version: " + System.getProperty("java.version"));
             
             // Minimal Windows compatibility for the driver (not needed by Docker containers)
@@ -59,8 +60,8 @@ public class SparkLogic {
 
             sparkSession = SparkSession.builder()
                     .appName("User Microservice")
-//                    .master("local[*]")
-                    .master("spark://localhost:7077")  // Connect to cluster
+                    .master("local[*]")
+//                    .master("spark://localhost:7077")  // Connect to cluster
                     .config("spark.driver.host", "host.docker.internal")  // Use Docker's standard host resolution
                     .config("spark.driver.port", "0")  // Let Spark choose port
                     .config("spark.driver.bindAddress", "0.0.0.0")
@@ -270,8 +271,9 @@ public class SparkLogic {
         Encoder<User> userEncoder = Encoders.bean(User.class);
 
         // Use the same TCP H2 database for both driver and executors
-        String executorJdbcUrl = jdbcUrl.replace("localhost", "h2-database");
-        
+//        String executorJdbcUrl = jdbcUrl.replace("localhost", "h2-database");
+        String executorJdbcUrl = jdbcUrl;
+
         Dataset<Row> tempData = sparkSession.read().format("jdbc")
                 .option("url", executorJdbcUrl)
                 .option("dbtable", "USERS")
@@ -354,9 +356,36 @@ public class SparkLogic {
     }
 
     public Dataset<User> getCachedData() {
+        // Wait for Spark to be initialized
+        waitForSparkInitialization();
+        
         if (userDataset == null)
             refreshData();
         return userDataset;
+    }
+    
+    public Dataset<User> createDatasetFromUser(User user) {
+        waitForSparkInitialization();
+        return sparkSession.createDataset(Collections.singletonList(user), Encoders.bean(User.class));
+    }
+    
+    private void waitForSparkInitialization() {
+        int maxWaitSeconds = 60;
+        int waitedSeconds = 0;
+        while (!sparkInitialized && waitedSeconds < maxWaitSeconds) {
+            try {
+                System.out.println("Waiting for Spark initialization...");
+                Thread.sleep(1000);
+                waitedSeconds++;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted while waiting for Spark initialization", e);
+            }
+        }
+        
+        if (!sparkInitialized) {
+            throw new RuntimeException("Spark failed to initialize within " + maxWaitSeconds + " seconds");
+        }
     }
 
     public void saveToDatabase(Dataset<User> data) {

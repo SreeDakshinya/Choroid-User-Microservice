@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 import static org.apache.spark.sql.functions.*;
@@ -33,9 +34,14 @@ public class UserRepository {
     }
 
     public User findUserByUsername(String queryUsername) {
-
         Dataset<User> userData = sparkLogic.getCachedData();
-        return userData.filter(userData.col("username").eqNullSafe(queryUsername)).head();
+        Dataset<User> filtered = userData.filter(userData.col("username").eqNullSafe(queryUsername));
+        
+        // Check if any results exist before calling head()
+        if (filtered.count() == 0) {
+            return null;
+        }
+        return filtered.head();
     }
 
     public User updateUserByUsername(String accessorUsername, User newUser) {
@@ -46,7 +52,7 @@ public class UserRepository {
 
         for (Field field: fields) {
             field.setAccessible(true);
-            if (field.getName().equals("selfAccess"))
+            if (Modifier.isStatic(field.getModifiers()) || field.getName().equals("selfAccess"))
                 continue;
             try {
                 Column existing = col(field.getName());
@@ -73,15 +79,16 @@ public class UserRepository {
             userData = userData.withColumns(updationMap).as(Encoders.bean(User.class));
 
         sparkLogic.saveToDatabase(userData);
-
+        sparkLogic.refreshData();
         return findUserByUsername(accessorUsername);
     }
 
     public User createUser(User newUser) {
         Dataset<User> userData = sparkLogic.getCachedData();
-        Dataset<User> newRow = sparkLogic.sparkSession.createDataset(Collections.singletonList(newUser), Encoders.bean(User.class));
+        Dataset<User> newRow = sparkLogic.createDatasetFromUser(newUser);
         userData = userData.unionByName(newRow, true);
         sparkLogic.saveToDatabase(userData);
+        sparkLogic.refreshData();
         return findUserByUsername(newUser.getUsername());
     }
 

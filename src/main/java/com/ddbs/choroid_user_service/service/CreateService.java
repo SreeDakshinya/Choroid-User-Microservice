@@ -20,7 +20,11 @@ public class CreateService{
     }
 
     public User createUserProfile(User newUser) {
-        return userRepository.createUser(newUser);
+        return this.userRepository.createUser(newUser);
+    }
+
+    public String findEmailUsingUsername(String username) {
+        return this.userRepository.findUserByUsername(username).getEmailId();
     }
 }
 

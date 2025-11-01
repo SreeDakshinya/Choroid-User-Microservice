@@ -240,11 +240,8 @@
         return field;
     }
 
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-        return null;
+    function getAuthToken() {
+        return localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
     }
 
     function renderProfile(user, accessorUsername, queryUsername) {
@@ -295,14 +292,15 @@
 
     function checkAuth() {
         let accessorUsername = '';
+        let token = '';
 
         try {
-            const token = getCookie('jwtToken');
+            token = getAuthToken();
 
             if (!token) {
                 alert('No authentication token found. Please login.');
                 window.location.href = '/login.html';
-                return null; // ✅ valid inside function
+                return null; // valid inside function
             }
 
             const payload = JSON.parse(atob(token.split('.')[1]));
@@ -330,7 +328,11 @@
     console.log('Fetching data for Accessor ID:', accessorUsername, 'Query ID:', queryUsername);
 
     // Fetch user profile
-    fetch(`/users/api/${accessorUsername}/view/${queryUsername}`)
+    fetch(`/users/api/${accessorUsername}/view/${queryUsername}`, {
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+                }
+            })
         .then(response => {
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return response.json();

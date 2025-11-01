@@ -290,11 +290,8 @@
 <script>
     let currentUser = {};
 
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-        return null;
+    function getAuthToken() {
+        return localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
     }
 
     function addTag(container, value, arrayName) {
@@ -410,9 +407,10 @@
         form.onsubmit = handleFormSubmit;
 
         let username = '';
+        let token = '';
 
         try {
-            const token = getCookie('jwtToken');
+            token = getAuthToken();
 
             if (!token) {
                 alert('No authentication token found. Please login.');
@@ -439,7 +437,7 @@
 <!--        const payload = JSON.parse(atob(token.split('.')[1]));-->
 <!--        const username = payload.username;-->
         basicSection.appendChild(createFormField('Name', 'name', 'text', '', true, false));
-        basicSection.appendChild(createFormField('Username', 'username', 'text', username, true, true));
+        basicSection.appendChild(createFormField('Username', 'username', 'text', username, false, true));
         basicSection.appendChild(createFormField('Email', 'emailId', 'email', '', true, false));
         form.appendChild(basicSection);
 
@@ -475,6 +473,13 @@
     function handleFormSubmit(event) {
         event.preventDefault();
 
+        const token = getAuthToken();
+        if (!token) {
+            alert('No authentication token found. Please login.');
+            window.location.href = '/login.html';
+            return;
+        }
+
         const newUser = {
             name: document.getElementById('name').value,
             username: document.getElementById('username').value,
@@ -506,6 +511,7 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(newUser)
         })

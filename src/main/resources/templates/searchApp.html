@@ -289,11 +289,8 @@
 
 <script>
 
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-        return null;
+    function getAuthToken() {
+        return localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
     }
 
     function createUserCard(user) {
@@ -301,9 +298,10 @@
         card.className = 'user-card';
         card.onclick = () => {
             let accessorUsername = '';
+            let token = '';
 
             try {
-                const token = getCookie('jwtToken');
+                token = getAuthToken();
 
                 if (!token) {
                     alert('No authentication token found. Please login.');
@@ -405,7 +403,11 @@
 
     function loadTopicOptions() {
         // Load teach topics
-        fetch('/users/api/topicstoteachlist')
+        fetch('/users/api/topicstoteachlist', {
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+                }
+            })
             .then(response => response.json())
             .then(topics => {
                 const teachSelect = document.getElementById('teachTopicsSelect');
@@ -423,7 +425,11 @@
             });
 
         // Load learn topics
-        fetch('/users/api/topicstolearnlist')
+        fetch('/users/api/topicstolearnlist', {
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+                }
+            })
             .then(response => response.json())
             .then(topics => {
                 const learnSelect = document.getElementById('learnTopicsSelect');
@@ -490,9 +496,10 @@
 <!--        const accessorUsername = pathParts[2] || '2'; // default to 2 if not in URL-->
 
         let accessorUsername = '';
+        let token = '';
 
         try {
-            const token = getCookie('jwtToken');
+            token = getAuthToken();
 
             if (!token) {
                 alert('No authentication token found. Please login.');
@@ -516,6 +523,7 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(searchQuery)
         })

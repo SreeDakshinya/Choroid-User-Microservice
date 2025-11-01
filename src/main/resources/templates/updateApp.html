@@ -285,6 +285,7 @@
 
 <script>
     let currentUser = {};
+    let accessorUsername = '';
 
     function addTag(container, value, arrayName) {
         if (!value.trim()) return;
@@ -382,23 +383,21 @@
         return field;
     }
 
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-        return null;
+    function getAuthToken() {
+        return localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
     }
 
     function checkAuth() {
         let accessorUsername = '';
+        let token = '';
 
         try {
-            const token = getCookie('jwtToken');
+            token = getAuthToken();
 
             if (!token) {
                 alert('No authentication token found. Please login.');
                 window.location.href = '/login.html';
-                return null; // ✅ valid inside function
+                return null; // valid inside function
             }
 
             const payload = JSON.parse(atob(token.split('.')[1]));
@@ -470,6 +469,13 @@
     function handleFormSubmit(event) {
         event.preventDefault();
 
+        const token = getAuthToken();
+        if (!token) {
+            alert('No authentication token found. Please login.');
+            window.location.href = '/login.html';
+            return;
+        }
+
         const formData = new FormData(event.target);
         const updatedUser = {
             name: document.getElementById('name').value,
@@ -493,6 +499,7 @@
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(updatedUser)
         })
@@ -524,7 +531,7 @@
 
     // Extract accessorUsername from URL path
     const pathParts = window.location.pathname.split('/');
-    const accessorUsername = checkAuth();
+    accessorUsername = checkAuth();
     if (accessorUsername) {
        console.log('Logged-in user:', accessorUsername);
     }
@@ -532,7 +539,11 @@
     console.log('Loading profile for editing - Accessor ID:', accessorUsername, 'Query ID:', accessorUsername);
 
     // Load current user data
-    fetch(`/users/api/${accessorUsername}/view/${accessorUsername}`)
+    fetch(`/users/api/${accessorUsername}/view/${accessorUsername}`, {
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+                }
+            })
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
