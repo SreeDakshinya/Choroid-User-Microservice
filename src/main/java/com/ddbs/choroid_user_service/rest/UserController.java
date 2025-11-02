@@ -87,4 +87,10 @@ public class UserController {
         return ResponseEntity.ok(emailId);
     }
 
+    @GetMapping("/listallusers")
+    public ResponseEntity<List<String>> listAllUserIds(){
+        List<String> userList = searchService.listAllUserIds();
+        return ResponseEntity.ok(userList);
+    }
+
 }
