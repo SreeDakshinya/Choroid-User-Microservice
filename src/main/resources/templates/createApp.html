@@ -291,7 +291,7 @@
     let currentUser = {};
 
     function getAuthToken() {
-        return localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
+        return localStorage.getItem('jwtToken');
     }
 
     function addTag(container, value, arrayName) {

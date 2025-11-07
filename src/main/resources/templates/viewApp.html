@@ -241,7 +241,7 @@
     }
 
     function getAuthToken() {
-        return localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
+        return localStorage.getItem('jwtToken');
     }
 
     function renderProfile(user, accessorUsername, queryUsername) {
