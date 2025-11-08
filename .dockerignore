@@ -1,0 +1,31 @@
+# Gradle & build caches
+.gradle/
+build/
+!build/libs/*SNAPSHOT.jar
+
+# IDE metadata
+.idea/
+*.iml
+.vscode/
+
+# Logs
+logs/
+*.log
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+
+# Local DB files
+/data/
+
+# Node / front-end caches (if added later)
+node_modules/
+
+# H2 files that may appear
+*.mv.db
+*.trace.db
+
+# Docker related
+Dockerfile.old
+

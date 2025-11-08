@@ -170,12 +170,29 @@ tasks.named("jar") {
 
 tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
 	dependsOn(tasks.compileJava)
-	// Java 11 + Spring Boot 2.7.18 - no module system flags needed
+	// Java 11 normally doesn't require aggressive opens, but keep for Spark compatibility
+	val sparkModuleOpens = listOf(
+		"--add-exports=java.base/sun.nio.ch=ALL-UNNAMED",
+		"--add-opens=java.base/java.lang=ALL-UNNAMED",
+		"--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
+		"--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+		"--add-opens=java.base/java.io=ALL-UNNAMED",
+		"--add-opens=java.base/java.net=ALL-UNNAMED",
+		"--add-opens=java.base/java.nio=ALL-UNNAMED",
+		"--add-opens=java.base/java.util=ALL-UNNAMED",
+		"--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+		"--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+		"--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+		"--add-opens=java.base/sun.nio.cs=ALL-UNNAMED",
+		"--add-opens=java.base/sun.security.action=ALL-UNNAMED",
+		"--add-opens=java.base/sun.util.calendar=ALL-UNNAMED",
+		"--add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED"
+	)
+	jvmArgs(sparkModuleOpens)
 }
 
 // Configure JVM arguments for Spark/Hadoop compatibility with Java 17+
 // tasks.withType<JavaExec> {
 // jvmArgs = listOf( // "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED", // "--add-opens=java.base/java.lang=ALL-UNNAMED", // "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED", // "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED", // "--add-opens=java.base/java.io=ALL-UNNAMED", // "--add-opens=java.base/java.net=ALL-UNNAMED", // "--add-opens=java.base/java.nio=ALL-UNNAMED", // "--add-opens=java.base/java.util=ALL-UNNAMED", // "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED", // "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED", // "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED", // "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED", // "--add-opens=java.base/sun.security.action=ALL-UNNAMED", // "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED", // "--add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED" // ) //} //
 // tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") { // jvmArgs = listOf( // "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED", // "--add-opens=java.base/java.lang=ALL-UNNAMED", // "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED", // "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED", // "--add-opens=java.base/java.io=ALL-UNNAMED", // "--add-opens=java.base/java.net=ALL-UNNAMED", // "--add-opens=java.base/java.nio=ALL-UNNAMED", // "--add-opens=java.base/java.util=ALL-UNNAMED", // "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED", // "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED", // "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED", // "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED", // "--add-opens=java.base/sun.security.action=ALL-UNNAMED", // "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED", // "--add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED" // ) //}
-
 
